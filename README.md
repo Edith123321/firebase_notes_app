@@ -1,16 +1,24 @@
-# firebase_notes_app
+# Firebase Notes App 📝🔥
 
-A new Flutter project.
+A Flutter mobile application for taking and managing notes using **Firebase Authentication** and **Cloud Firestore**. Each user can sign in, add, edit, and delete their personal notes in real time.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## 📱 Features
 
-A few resources to get you started if this is your first Flutter project:
+- 🔐 Firebase Authentication (Email & Password)
+- ☁️ Cloud Firestore for storing user-specific notes
+- ➕ Add, ✏️ Edit, and 🗑 Delete notes
+- 📆 Timestamped notes
+- 🧑‍💻 Logged-in user notes are isolated
+- 🔄 Live updates via `StreamBuilder`
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🛠 Getting Started
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/edith123321/firebase_notes_app.git
+cd firebase_notes_app
