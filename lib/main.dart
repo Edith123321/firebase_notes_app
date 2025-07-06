@@ -2,7 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'screens/auth_screen.dart';
-import 'screens/landing_screen.dart';
+import 'screens/notes_screen.dart'; 
+
 import 'firebase_options.dart';
 
 void main() async {
@@ -27,14 +28,9 @@ class MyApp extends StatelessWidget {
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-          return snapshot.hasData 
-              ? const LandingScreen() 
-              : const AuthScreen();
+          final user = snapshot.data;
+          // Directly show NotesScreen if logged in, otherwise show AuthScreen
+          return user != null ? const NotesScreen() : const AuthScreen();
         },
       ),
     );

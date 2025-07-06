@@ -1,8 +1,9 @@
+import 'package:firebase_notes_app/screens/notes_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' show User;
 
 import '../services/auth_service.dart';
-import 'landing_screen.dart';
+
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -35,6 +36,7 @@ class _AuthScreenState extends State<AuthScreen> {
       SnackBar(
         content: Text(message),
         backgroundColor: isError ? Colors.red : Colors.green,
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
@@ -56,7 +58,7 @@ class _AuthScreenState extends State<AuthScreen> {
         await _showMessage(_isLogin ? 'Login successful!' : 'Account created!');
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const LandingScreen()),
+          MaterialPageRoute(builder: (_) => const NotesScreen()),
         );
       }
     } catch (e) {
@@ -107,30 +109,56 @@ class _AuthScreenState extends State<AuthScreen> {
   TextFormField _buildEmailField() {
     return TextFormField(
       controller: _emailController,
-      decoration: const InputDecoration(labelText: 'Email'),
+      decoration: const InputDecoration(
+        labelText: 'Email',
+        border: OutlineInputBorder(),
+      ),
       keyboardType: TextInputType.emailAddress,
-      validator: (value) =>
-          (value == null || value.isEmpty) ? 'Enter an email' : null,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Email is required';
+        }
+        final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}$');
+        if (!emailRegex.hasMatch(value)) {
+          return 'Enter a valid email';
+        }
+        return null;
+      },
     );
   }
 
   TextFormField _buildPasswordField() {
     return TextFormField(
       controller: _passwordController,
-      decoration: const InputDecoration(labelText: 'Password'),
+      decoration: const InputDecoration(
+        labelText: 'Password',
+        border: OutlineInputBorder(),
+      ),
       obscureText: true,
-      validator: (value) =>
-          (value == null || value.length < 6) ? 'Password too short' : null,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Password is required';
+        } else if (value.length < 6) {
+          return 'Password must be at least 6 characters';
+        }
+        return null;
+      },
     );
   }
 
   Widget _buildAuthButton() {
-    return _isLoading
-        ? const CircularProgressIndicator()
-        : ElevatedButton(
-            onPressed: _submit,
-            child: Text(_isLogin ? 'Login' : 'Sign Up'),
-          );
+    return SizedBox(
+      width: double.infinity,
+      child: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ElevatedButton(
+              onPressed: _submit,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: Text(_isLogin ? 'Login' : 'Sign Up'),
+            ),
+    );
   }
 
   Widget _buildToggleAuthButton() {

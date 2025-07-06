@@ -1,0 +1,2 @@
+[info] Don't use 'BuildContext's across async gaps (/Users/Zhuanz/projects/flutter-projects/firebase_notes_app/lib/screens/notes_screen.dart:49:46)
+[info] Don't use 'BuildContext's across async gaps (/Users/Zhuanz/projects/flutter-projects/firebase_notes_app/lib/screens/auth_screen.dart:60:11)

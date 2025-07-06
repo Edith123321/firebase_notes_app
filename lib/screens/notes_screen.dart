@@ -29,7 +29,16 @@ class _NotesScreenState extends State<NotesScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('My Notes', style: TextStyle(color: Colors.white)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('My Notes', style: TextStyle(color: Colors.white)),
+            Text(
+              _auth.currentUser?.email ?? '',
+              style: const TextStyle(fontSize: 12, color: Colors.white70),
+            ),
+          ],
+        ),
         backgroundColor: Colors.deepPurple,
         elevation: 0,
         actions: [
@@ -48,7 +57,9 @@ class _NotesScreenState extends State<NotesScreen> {
         onPressed: () => _showAddNoteDialog(context),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: _notesCollection.orderBy('timestamp', descending: true).snapshots(),
+        stream: _notesCollection
+            .orderBy('timestamp', descending: true)
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(
@@ -72,91 +83,47 @@ class _NotesScreenState extends State<NotesScreen> {
                   const SizedBox(height: 20),
                   Text(
                     'Nothing here yet',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 5),
                   Text(
                     'Tap ➕ to add your first note',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[500],
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.grey[500]),
                   ),
                 ],
               ),
             );
           }
 
-          return ListView.builder(
+          return ListView.separated(
             padding: const EdgeInsets.all(16),
+            separatorBuilder: (_, __) => const Divider(height: 1),
             itemCount: snapshot.data!.docs.length,
             itemBuilder: (context, index) {
               final doc = snapshot.data!.docs[index];
               final data = doc.data() as Map<String, dynamic>;
-              final date = (data['timestamp'] as Timestamp).toDate();
-              
-              return Dismissible(
-                key: Key(doc.id),
-                direction: DismissDirection.endToStart,
-                background: Container(
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 20),
-                  color: Colors.red[400],
-                  child: const Icon(Icons.delete, color: Colors.white),
+              final date = (data['timestamp'] as Timestamp?)?.toDate();
+
+              return ListTile(
+                title: Text(data['text'] ?? ''),
+                subtitle: Text(
+                  date != null
+                      ? DateFormat('MMM dd, yyyy - hh:mm a').format(date)
+                      : 'No date',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
-                confirmDismiss: (direction) async {
-                  return await showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Delete Note'),
-                      content: const Text('Are you sure you want to delete this note?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(true),
-                          child: const Text('Delete', style: TextStyle(color: Colors.red)),
-                        ),
-                      ],
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.deepPurple),
+                      onPressed: () => _showEditNoteDialog(context, doc),
                     ),
-                  );
-                },
-                onDismissed: (direction) => doc.reference.delete(),
-                child: Card(
-                  elevation: 2,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () => _showEditNoteDialog(context, doc),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            data['text'],
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            DateFormat('MMM dd, yyyy - hh:mm a').format(date),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => _confirmDelete(context, doc),
                     ),
-                  ),
+                  ],
                 ),
               );
             },
@@ -178,7 +145,7 @@ class _NotesScreenState extends State<NotesScreen> {
         onSave: () {
           if (textController.text.isNotEmpty) {
             _notesCollection.add({
-              'text': textController.text,
+              'text': textController.text.trim(),
               'timestamp': FieldValue.serverTimestamp(),
             });
             Navigator.pop(context);
@@ -200,12 +167,35 @@ class _NotesScreenState extends State<NotesScreen> {
         onSave: () {
           if (textController.text.isNotEmpty) {
             doc.reference.update({
-              'text': textController.text,
+              'text': textController.text.trim(),
               'timestamp': FieldValue.serverTimestamp(),
             });
             Navigator.pop(context);
           }
         },
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context, DocumentSnapshot doc) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Note'),
+        content: const Text('Are you sure you want to delete this note?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              doc.reference.delete();
+              Navigator.of(context).pop();
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
       ),
     );
   }
@@ -223,13 +213,9 @@ class _NotesScreenState extends State<NotesScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            Text(title,
+                style: const TextStyle(
+                    fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             TextField(
               controller: controller,
@@ -239,7 +225,7 @@ class _NotesScreenState extends State<NotesScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              maxLines: 5,
+              maxLines: 4,
             ),
             const SizedBox(height: 16),
             Row(
@@ -255,7 +241,8 @@ class _NotesScreenState extends State<NotesScreen> {
                     backgroundColor: Colors.deepPurple,
                   ),
                   onPressed: onSave,
-                  child: const Text('Save', style: TextStyle(color: Colors.white)),
+                  child:
+                      const Text('Save', style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
